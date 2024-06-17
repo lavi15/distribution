@@ -2,6 +2,7 @@ package v1.distribution.packages.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Arrays;
 import java.util.List;
@@ -10,6 +11,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
+import v1.distribution.common.DistributionBadRequestException;
+import v1.distribution.packages.domain.DeliveryPackage;
 import v1.distribution.packages.domain.DeliveryPackageRepository;
 import v1.distribution.packages.domain.ImageRepository;
 
@@ -45,7 +49,7 @@ class DeliveryPackageServiceTest {
             .build();
 
         //when
-        DeliveryPackageDto deliveryPackageDto = deliveryPackageService.savePackage(deliveryPackageRequest);
+        DeliveryPackageDto deliveryPackageDto = deliveryPackageService.createPackage(deliveryPackageRequest);
 
         //then
         assertThat(deliveryPackageDto).extracting("id", "trackingNo")
@@ -56,6 +60,33 @@ class DeliveryPackageServiceTest {
                 tuple("example1.png", "PKG"),
                 tuple("example2.png", "PKG")
             );
+    }
+
+    @Test
+    @DisplayName("동일한 trackingNo인 패키지를 저장하면 DistributionBadRequestException이 발생한다.")
+    void createPackageWithException() {
+        //given
+        List<ImageRequest> imageRequests = Arrays.asList(
+            ImageRequest.builder().filename("example1.png").type("PKG").build(),
+            ImageRequest.builder().filename("example2.png").type("PKG").build()
+        );
+
+        DeliveryPackageRequest deliveryPackageRequest = DeliveryPackageRequest.builder()
+            .trackingNo(1122L)
+            .images(imageRequests)
+            .build();
+
+        DeliveryPackageDto deliveryPackageDto = deliveryPackageService.createPackage(deliveryPackageRequest);
+
+        //when //then
+        DeliveryPackageRequest duplicateTrackingNoPackage = DeliveryPackageRequest.builder()
+            .trackingNo(1122L)
+            .images(imageRequests)
+            .build();
+
+        assertThrows(DistributionBadRequestException.class, () -> {
+            deliveryPackageService.createPackage(duplicateTrackingNoPackage);
+        });
     }
 
     @Test
@@ -82,9 +113,9 @@ class DeliveryPackageServiceTest {
             .images(secondImageRequests)
             .build();
 
-        DeliveryPackageDto firstDeliveryPackageDto = deliveryPackageService.savePackage(firstDeliveryPackageRequest);
+        DeliveryPackageDto firstDeliveryPackageDto = deliveryPackageService.createPackage(firstDeliveryPackageRequest);
 
-        DeliveryPackageDto secondDeliveryPackageDto = deliveryPackageService.savePackage(secondDeliveryPackageRequest);
+        DeliveryPackageDto secondDeliveryPackageDto = deliveryPackageService.createPackage(secondDeliveryPackageRequest);
 
         //when
         List<DeliveryPackageDto> deliveryPackageDtos = deliveryPackageService.getAllPackage();
@@ -123,7 +154,7 @@ class DeliveryPackageServiceTest {
             .images(imageRequests)
             .build();
 
-        DeliveryPackageDto savedPackageDto = deliveryPackageService.savePackage(deliveryPackageRequest);
+        DeliveryPackageDto savedPackageDto = deliveryPackageService.createPackage(deliveryPackageRequest);
 
         //when
         DeliveryPackageDto seachedPackageDto = deliveryPackageService.getPackageById(savedPackageDto.getId());
@@ -153,7 +184,7 @@ class DeliveryPackageServiceTest {
             .images(imageRequests)
             .build();
 
-        DeliveryPackageDto savedPackageDto = deliveryPackageService.savePackage(deliveryPackageRequest);
+        DeliveryPackageDto savedPackageDto = deliveryPackageService.createPackage(deliveryPackageRequest);
 
         //when
         DeliveryPackageDto seachedPackageDto = deliveryPackageService.getPackageByTrackingNo(1122L);
@@ -183,7 +214,7 @@ class DeliveryPackageServiceTest {
             .images(imageRequests)
             .build();
 
-        DeliveryPackageDto savedPackageDto = deliveryPackageService.savePackage(deliveryPackageRequest);
+        DeliveryPackageDto savedPackageDto = deliveryPackageService.createPackage(deliveryPackageRequest);
 
         //when
         deliveryPackageService.deletePackage(savedPackageDto.getId());
@@ -208,7 +239,7 @@ class DeliveryPackageServiceTest {
             .images(imageRequests)
             .build();
 
-        DeliveryPackageDto savedPackageDto = deliveryPackageService.savePackage(deliveryPackageRequest);
+        DeliveryPackageDto savedPackageDto = deliveryPackageService.createPackage(deliveryPackageRequest);
 
         //when
         deliveryPackageService.updateTrackingNo(savedPackageDto.getId(), 1123L);
@@ -240,7 +271,7 @@ class DeliveryPackageServiceTest {
             .images(imageRequests)
             .build();
 
-        DeliveryPackageDto savedPackageDto = deliveryPackageService.savePackage(deliveryPackageRequest);
+        DeliveryPackageDto savedPackageDto = deliveryPackageService.createPackage(deliveryPackageRequest);
 
         //when
         ImageRequest addImageRequest = ImageRequest.builder().filename("example3.png").type("PKG").build();
@@ -275,7 +306,7 @@ class DeliveryPackageServiceTest {
             .images(imageRequests)
             .build();
 
-        DeliveryPackageDto savedPackageDto = deliveryPackageService.savePackage(deliveryPackageRequest);
+        DeliveryPackageDto savedPackageDto = deliveryPackageService.createPackage(deliveryPackageRequest);
 
         //when
         ImageRequest addImageRequest = ImageRequest.builder().filename("example2.png").type("PKG").build();

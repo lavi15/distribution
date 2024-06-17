@@ -13,7 +13,7 @@ public enum DistributionErrors {
     INVALID_IMAGE_TYPE("잘못된 이미지 타입입니다."),
     PACKAGE_ID_NOT_FOUND("패키지 ID를 찾을 수 없습니다."),
     IMAGE_NOT_FOUND("이미지를 찾을 수 없습니다."),
-    DUPLICATED_FILE_NAME("중복된 파일명입니다.");
+    DUPLICATED_TRACKING_NO("중복된 운송 번호입니다.");
 
     String errorMsg;
 }

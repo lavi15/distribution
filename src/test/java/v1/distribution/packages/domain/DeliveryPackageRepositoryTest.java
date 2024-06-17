@@ -2,6 +2,7 @@ package v1.distribution.packages.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Arrays;
 import java.util.List;
@@ -10,6 +11,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
+import v1.distribution.common.DistributionBadRequestException;
+import v1.distribution.common.DistributionNotFoundException;
 
 @SpringBootTest
 class DeliveryPackageRepositoryTest {
@@ -54,6 +58,35 @@ class DeliveryPackageRepositoryTest {
                 tuple("example1.png", ImageType.PKG),
                 tuple("example2.png", ImageType.PKG)
             );
+    }
+
+    @Test
+    @DisplayName("동일한 trackingNo인 패키지를 저장하면 DataIntegrityViolationException이 발생한다.")
+    void createPackageWithException() {
+        //given
+        List<Image> images = Arrays.asList(
+            Image.builder().filename("example1.png").type(ImageType.PKG).build(),
+            Image.builder().filename("example2.png").type(ImageType.PKG).build()
+        );
+
+        DeliveryPackage deliveryPackage = DeliveryPackage.builder()
+            .trackingNo(1122L)
+            .images(images)
+            .build();
+
+        deliveryPackage.syncImagesWithPackage();
+
+        deliveryPackageRepository.save(deliveryPackage);
+
+        //when //then
+        DeliveryPackage duplicateTrackingNoPackage = DeliveryPackage.builder()
+            .trackingNo(1122L)
+            .images(null)
+            .build();
+
+        assertThrows(DataIntegrityViolationException.class, () -> {
+            deliveryPackageRepository.save(duplicateTrackingNoPackage);
+        });
     }
 
     @Test

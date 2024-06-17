@@ -1,11 +1,15 @@
 package v1.distribution.packages.application;
 
+import static v1.distribution.common.DistributionErrors.DUPLICATED_TRACKING_NO;
+
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import v1.distribution.common.DistributionBadRequestException;
 import v1.distribution.packages.domain.DeliveryPackage;
 import v1.distribution.packages.domain.DeliveryPackageRepository;
 
@@ -17,9 +21,15 @@ public class DeliveryPackageService {
     DeliveryPackageReader deliveryPackageReader;
 
     @Transactional
-    public DeliveryPackageDto savePackage(DeliveryPackageRequest deliveryPackageRequest) {
-        DeliveryPackage deliveryPackage = deliveryPackageRequest.toDomain();
-        return DeliveryPackageDto.fromDomain(deliveryPackageRepository.save(deliveryPackage));
+    public DeliveryPackageDto createPackage(DeliveryPackageRequest deliveryPackageRequest) {
+        try {
+            DeliveryPackage deliveryPackage = deliveryPackageRequest.toDomain();
+            DeliveryPackage savedPackage = deliveryPackageRepository.save(deliveryPackage);
+
+            return DeliveryPackageDto.fromDomain(savedPackage);
+        } catch (DataIntegrityViolationException e) {
+            throw new DistributionBadRequestException(DUPLICATED_TRACKING_NO, e);
+        }
     }
 
     @Transactional(readOnly = true)

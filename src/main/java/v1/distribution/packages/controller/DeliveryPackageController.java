@@ -25,8 +25,8 @@ public class DeliveryPackageController {
 
     @Operation(summary = "패키지를 저장한다.")
     @PostMapping("/packages")
-    public DeliveryPackageDto savePackage(@RequestBody DeliveryPackageRequest deliveryPackageRequest) {
-        return deliveryPackageService.savePackage(deliveryPackageRequest);
+    public DeliveryPackageDto createPackage(@RequestBody DeliveryPackageRequest deliveryPackageRequest) {
+        return deliveryPackageService.createPackage(deliveryPackageRequest);
     }
 
     @Operation(summary = "전체 패키지를 조회한다.")
